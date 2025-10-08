@@ -14,4 +14,4 @@
 cd /home/rbtucker/msmi_simulations
 module load R
 
-Rscript sim_illness_death.R "$SLURM_ARRAY_TASK_ID"
+Rscript sim_illness_death.R
