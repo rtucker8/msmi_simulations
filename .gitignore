@@ -1,0 +1,9 @@
+.Rproj.user
+.Rhistory
+.RData
+.httr-oauth
+.DS_Store
+.quarto
+Output/
+Simulation_Ch1_3Sep2025.pdf
+simulation_helper.R
