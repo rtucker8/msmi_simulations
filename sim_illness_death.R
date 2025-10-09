@@ -21,8 +21,15 @@ load("Truth/sim_setting_characteristics.RData") #true state occupation probabili
 ###############################
 
 #simulations setting corresponding to row in settings dataframe
-j = Sys.getenv('SLURM_ARRAY_TASK_ID')
-j = as.numeric(j)
+
+if (!(Sys.getenv('SLURM_ARRAY_TASK_ID') == "")) {
+  j = Sys.getenv('SLURM_ARRAY_TASK_ID') #.slurm script is an array job that runs each simulation setting
+  j = as.numeric(j)
+} else if (Sys.getenv('SLURM_ARRAY_TASK_ID') == ""){
+  print("Simulations being run locally. Please make sure the right value of j is being used.")
+  j = 1 #change this value to run different settings when running locally
+}
+
 
 #sample size
 sample_size=100
