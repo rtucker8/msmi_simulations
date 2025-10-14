@@ -22,11 +22,13 @@ b<- c(rep(0,4), rep(log(0.5), 4))
 m01 <- c(rep(c(3,3,8,8), 2))
 m02 <- c(rep(c(8,8,3,3), 2))
 m12 <- c(rep(c(3,6), 4))
-  
-settings <- data.frame(b, m01, m02, m12, s01 =1.3, s02 = 1.5, s12 = 2) %>% 
+
+settings <- data.frame(b, m01, m02, m12, s01 =1.3, s02 = 1.5, s12 = 2) %>%
   bind_rows(data.frame(b, m01, m02, m12, s01 =0.7, s02 = 1.5, s12 = 2)) %>%
   mutate(setting = 1:nrow(.), theta = 12) %>%
   select(setting, everything())
+
+settings <- bind_rows(settings, c(setting = 17, b=0, m01=8, m02=1, m12=3, s01=1.3, s02=1.5, s12=2, theta=12))
 
 # Operating Characteristics ------------------------------------------------
 
@@ -52,14 +54,27 @@ dsets <- pmap(settings, function(b, m01, m02, m12, s01, s02, s12, theta, ...) {
 #Calculate proportion of individuals that experience illness
 settings$ever_ill <- map_dbl(dsets, ~ mean(.x[, "event1"] == 1))
 
+# #Plot the density of sojourn times with violin plots
+# violin <- function(d) {
+#   d <- d %>%
+#     select(sojourn01, sojourn02, sojourn12) %>%
+#     pivot_longer(cols = everything(), names_to = "transition", names_prefix = "sojourn", values_to = "time") %>%
+#     filter(!is.na(time))
+#
+#   ggplot(data=d, mapping = aes(x=transition, y=time, fill=transition)) +
+#     geom_violin()
+#
+# }
+
+
 
 #Calculate the true state occupation probabilities and plot over time
 empirical_truth <- map(dsets, function(x) {
-  get_empirical_probs(x, times = seq(0, 12, by = 0.25))  %>% 
+  get_empirical_probs(x, times = seq(0, 12, by = 0.25))  %>%
     select(time, pHealthy, pIll, pDead) %>%
     pivot_longer(cols = c("pHealthy", "pIll", "pDead"), names_to = "state", names_prefix = "p", values_to = "probability")
 })
-  
+
 empirical_truth_long <- bind_rows(empirical_truth, .id = "setting") %>% mutate(setting = as.numeric(setting),
                                                                  state = factor(state, levels = c("Healthy", "Ill", "Dead"), ordered=TRUE))
 

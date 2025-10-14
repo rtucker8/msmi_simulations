@@ -13,8 +13,8 @@ library(philentropy) #calculate KL divergence
 setwd("/Users/rachelgonzalez/Documents/Dissertation/msmi_simulations")
 source("simulation_helper_V2.R")
 load("Truth/sim_setting_characteristics.RData") #true state occupation probabilities for each setting
-# Run Simulation ----------------------------------------------------------
 
+# Run Simulation ----------------------------------------------------------
 
 ###############################
 ## Set Simulation Parameters ##
@@ -59,7 +59,9 @@ truth_all <- empirical_truth[[j]] %>% pivot_wider(names_from = state, values_fro
 truth <- truth_all %>% filter(time %in% eval_times)
 
 #number of imputations for MI methods
-number.imps <- 200
+number.nests <- 10
+number.imps <- 20
+
 
 ################################
 ## Simulate Multiple Datasets ##
@@ -165,16 +167,16 @@ aj_results_plot <- aj_results %>% left_join(truth, by = "time") %>%
 ################################
 
 imps_marginal <- map2(d.sim, random.seeds, function(d, s) {
-  msmi.impute(dat = d, M = number.imps, method="marginal", seed=s)
+  msmi.nested.impute(dat = d, M = number.nests, R=number.imps,  method="marginal", seed=s) %>% list_flatten()
 })
 
-
-#Obtain empirical state occupation probabilities for each imputed dataset
+#Obtain empirical state occupation probabilities for each imputed dataset (MxR of them)
 empirical_probs_list <- map(imps_marginal, function(imp_list) {
-  map(imp_list, function(df) {get_empirical_probs(df, eval_times)})
+  map(imp_list, function(df) {
+    get_empirical_probs(df, eval_times)})
 })
 
-#Average empirical probabilities across imputations for each simulated dataset (Rubin's Rule Estimate)
+#Average empirical probabilities across imputations for each simulated dataset (Rubin's Rules Estimate)
 mi_estimate <- map(empirical_probs_list, function(imp_list) {
   bind_rows(imp_list, .id = "imputation") %>%
     group_by(time) %>%
@@ -219,15 +221,15 @@ mi_results_plot <- mi_results %>% rename(pstate1 = pHealthy, pstate2 = pIll, pst
 ################################
 
 imps_cox <- map2(d.sim, random.seeds, function(d, s) {
-  msmi.impute(dat = d, M = number.imps, method="cox", seed=s)
+ msmi.nested.impute(dat = d, M = number.nests, R=number.imps,  method="cox", seed=s) %>% list_flatten()
 })
 
-#Obtain empirical state occupation probabilities for each imputed dataset
+#Obtain empirical state occupation probabilities for each imputed dataset (MxR of them)
 cox_empirical_probs_list <- map(imps_cox, function(imp_list) {
   map(imp_list, function(df) {get_empirical_probs(df, eval_times)})
 })
 
-#Combine empirical probabilities across imputations for each simulated dataset
+#Combine empirical probabilities across imputations for each simulated dataset (sum over both M and R)
 cox_mi_estimate <- map(cox_empirical_probs_list, function(imp_list) {
   bind_rows(imp_list, .id = "imputation") %>%
     group_by(time) %>%
@@ -347,16 +349,16 @@ ggsave(paste0("Output/Figures/Variability/variability_results_k", as.character(s
 
 
 #Correlation Figure
-#scatterplot of AJ vs Cox MI estimates
+#scatterplot of AJ vs Marginal MI estimates (only makes sense in settings where HR = 1)
 corr_plot <- bias_results_plot %>%
   select(time, simulation, state, method, estimate) %>%
   pivot_wider(names_from = method, values_from = estimate)
 
-ggplot(corr_plot) + geom_point(aes(x=`Aalen-Johansen`, y=`Cox MI`), alpha=.8) +
+ggplot(corr_plot) + geom_point(aes(x=`Aalen-Johansen`, y=`Marginal MI`, color=time), alpha=.8) +
   geom_abline(intercept = 0, slope = 1, color = "red", linetype = "dashed") +
   facet_wrap(~state) +
   labs(title="Association of Estimates Between Methods",
-       x="Aalen-Johansen Estimate", y="Cox MI Estimate") +
+       x="Aalen-Johansen Estimate", y="Marginal MI Estimate") +
   theme(text = element_text(size=9),
         axis.title = element_text(size=11),
         plot.title = element_text(size=12, hjust = 0.5))
@@ -365,4 +367,3 @@ ggsave(paste0("Output/Figures/Correlation/correlation_results_k", as.character(s
 
 #Notes:
 #don't want to enforce proportional hazards for treatment vs control via simulation design
-#Surv(Tstart, Tstop, status) or Surv(time, status) for AJ estimation??????
