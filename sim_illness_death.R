@@ -10,7 +10,6 @@ library(msmi)
 library(philentropy) #calculate KL divergence
 
 # Functions ---------------------------------------------------------------
-setwd("/Users/rachelgonzalez/Documents/Dissertation/msmi_simulations")
 source("simulation_helper_V2.R")
 load("Truth/sim_setting_characteristics.RData") #true state occupation probabilities for each setting
 
@@ -26,6 +25,7 @@ if (!(Sys.getenv('SLURM_ARRAY_TASK_ID') == "")) {
   j = Sys.getenv('SLURM_ARRAY_TASK_ID') #.slurm script is an array job that runs each simulation setting
   j = as.numeric(j)
 } else if (Sys.getenv('SLURM_ARRAY_TASK_ID') == ""){
+  setwd("/Users/rachelgonzalez/Documents/Dissertation/msmi_simulations")
   print("Simulations being run locally. Please make sure the right value of j is being used.")
   j = 1 #change this value to run different settings when running locally
 }
