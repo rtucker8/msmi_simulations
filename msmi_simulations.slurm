@@ -5,7 +5,7 @@
 #SBATCH --mail-type=BEGIN,END
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=10GB
-#SBATCH --time=3:00:00
+#SBATCH --time=6:00:00
 #SBATCH --account=philb0
 #SBATCH --partition=standard
 #SBATCH --output=logs/%x-%A_%a.log
