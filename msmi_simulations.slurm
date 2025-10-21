@@ -9,7 +9,7 @@
 #SBATCH --account=philb0
 #SBATCH --partition=standard
 #SBATCH --output=logs/%x-%A_%a.log
-#SBATCH --array=1,2
+#SBATCH --array=1,5
 
 cd /home/rbtucker/msmi_simulations
 module load R
